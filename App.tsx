@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, {useEffect, useState} from 'react';
 import {
   PermissionsAndroid,
@@ -29,6 +28,7 @@ const requestLocationPermission = async () => {
     );
 
     if (hasPermission) {
+      console.log('You can use fine location');
       return Promise.resolve();
     }
 
@@ -80,45 +80,43 @@ const MainScreen = () => {
     setUpdateIntervalForType(SensorTypes.barometer, 1000); // defaults to 100ms
 
     const gyroSubscription = gyroscope.subscribe(speed => {
-      setState({
-        ...state,
+      setState(st => ({
+        ...st,
         gyro: {
           ...speed,
         },
-      });
+      }));
     });
 
     const magnetometerSubscription = magnetometer.subscribe(mag => {
-      setState({
-        ...state,
+      setState(st => ({
+        ...st,
         magnetometer: {
           ...mag,
         },
-      });
+      }));
     });
 
     const barometerSubscription = barometer.subscribe(({pressure}) =>
-      setState({...state, pressure}),
+      setState(st => ({...st, pressure})),
     );
 
     requestLocationPermission().then(() => {
-      Geolocation.watchPosition(
+      Geolocation.getCurrentPosition(
         position => {
-          setState({
-            ...state,
+          setState(st => ({
+            ...st,
             position: {
               x: position.coords.longitude,
               y: position.coords.latitude,
             },
-          });
+          }));
         },
         error => {
           console.log(error.code, error.message);
         },
         {
           enableHighAccuracy: true,
-          interval: 100,
-          showsBackgroundLocationIndicator: true,
         },
       );
     });
