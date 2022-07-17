@@ -6,66 +6,77 @@ import {
   gyroscope,
   setUpdateIntervalForType,
   SensorTypes,
+  magnetometer,
 } from 'react-native-sensors';
 
 export const App = () => {
   return <MainScreen />;
 };
 
-type PageState =
-  | {
-      state: 'get-gyro';
-      coord: {x: number; y: number; z: number};
-    }
-  | {
-      state: 'show-message';
-      message: string;
-    };
+type PageState = {
+  gyro: {x: number; y: number; z: number};
+  magnetometer: {x: number; y: number; z: number};
+};
 
 const MainScreen = () => {
   const [state, setState] = useState<PageState>({
-    state: 'get-gyro',
-    coord: {x: 0, y: 0, z: 0},
+    gyro: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
+    magnetometer: {
+      x: 0,
+      y: 0,
+      z: 0,
+    },
   });
 
   useEffect(() => {
-    setUpdateIntervalForType(SensorTypes.accelerometer, 400); // defaults to 100ms
-    const subscription = gyroscope.subscribe(speed => {
-      if (speed.x >= 1 || speed.y >= 1 || speed.z >= 1) {
-        setState({state: 'show-message', message: 'girando'});
-        setTimeout(() => {
-          setState({state: 'get-gyro', coord: {x: 0, y: 0, z: 0}});
-        }, 10000);
-      } else if (state.state !== 'show-message') {
-        setState({
-          state: 'get-gyro',
-          coord: {
-            ...speed,
-          },
-        });
-      }
+    setUpdateIntervalForType(SensorTypes.accelerometer, 100); // defaults to 100ms
+    setUpdateIntervalForType(SensorTypes.magnetometer, 100); // defaults to 100ms
+
+    const gyroSubscription = gyroscope.subscribe(speed => {
+      setState({
+        ...state,
+        gyro: {
+          ...speed,
+        },
+      });
+    });
+
+    const magnetometerSubscription = magnetometer.subscribe(mag => {
+      setState({
+        ...state,
+        magnetometer: {
+          ...mag,
+        },
+      });
     });
 
     return () => {
-      subscription.unsubscribe();
+      gyroSubscription.unsubscribe();
+      magnetometerSubscription.unsubscribe();
     };
   }, []);
 
   return (
     <SafeAreaView>
-      {state.state === 'get-gyro' ? (
-        <>
-          <View>
-            <TextInput value={state.coord.x.toString()} />
-            <TextInput value={state.coord.y.toString()} />
-            <TextInput value={state.coord.z.toString()} />
-          </View>
-        </>
-      ) : (
-        <>
-          <Text>{state.message}</Text>
-        </>
-      )}
+      <>
+        <View>
+          <Text>Giroscópio</Text>
+          <TextInput value={state.gyro.x.toString()} />
+          <TextInput value={state.gyro.y.toString()} />
+          <TextInput value={state.gyro.z.toString()} />
+        </View>
+        <View>
+          <Text>Magnetômetro</Text>
+          <TextInput value={state.magnetometer.x.toString()} />
+          <TextInput value={state.magnetometer.y.toString()} />
+          <TextInput value={state.magnetometer.z.toString()} />
+        </View>
+      </>
+      )
     </SafeAreaView>
   );
 };
