@@ -1,6 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, Text, TextInput, View} from 'react-native';
+import {
+  PermissionsAndroid,
+  SafeAreaView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import {
   gyroscope,
@@ -10,13 +16,45 @@ import {
   barometer,
 } from 'react-native-sensors';
 
+import Geolocation from 'react-native-geolocation-service';
+
 export const App = () => {
   return <MainScreen />;
+};
+
+const requestLocationPermission = async () => {
+  try {
+    const hasPermission = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+
+    if (hasPermission) {
+      return Promise.resolve();
+    }
+
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      {
+        title: 'Permissão de acessar GPS',
+        message: 'Permitir GPS?',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      },
+    );
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('You can use fine location');
+    } else {
+      console.log('fine location permission denied');
+    }
+  } catch (err) {
+    console.warn(err);
+  }
 };
 
 type PageState = {
   gyro: {x: number; y: number; z: number};
   magnetometer: {x: number; y: number; z: number};
+  position: {x: number; y: number};
   pressure: number;
 };
 
@@ -33,11 +71,13 @@ const MainScreen = () => {
       z: 0,
     },
     pressure: 0,
+    position: {x: 0, y: 0},
   });
 
   useEffect(() => {
-    setUpdateIntervalForType(SensorTypes.accelerometer, 100); // defaults to 100ms
-    setUpdateIntervalForType(SensorTypes.magnetometer, 100); // defaults to 100ms
+    setUpdateIntervalForType(SensorTypes.accelerometer, 1000); // defaults to 100ms
+    setUpdateIntervalForType(SensorTypes.magnetometer, 1000); // defaults to 100ms
+    setUpdateIntervalForType(SensorTypes.barometer, 1000); // defaults to 100ms
 
     const gyroSubscription = gyroscope.subscribe(speed => {
       setState({
@@ -61,6 +101,28 @@ const MainScreen = () => {
       setState({...state, pressure}),
     );
 
+    requestLocationPermission().then(() => {
+      Geolocation.watchPosition(
+        position => {
+          setState({
+            ...state,
+            position: {
+              x: position.coords.longitude,
+              y: position.coords.latitude,
+            },
+          });
+        },
+        error => {
+          console.log(error.code, error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          interval: 100,
+          showsBackgroundLocationIndicator: true,
+        },
+      );
+    });
+
     return () => {
       gyroSubscription.unsubscribe();
       magnetometerSubscription.unsubscribe();
@@ -73,22 +135,32 @@ const MainScreen = () => {
       <>
         <View>
           <Text>Giroscópio</Text>
-          <TextInput value={state.gyro.x.toString()} />
-          <TextInput value={state.gyro.y.toString()} />
-          <TextInput value={state.gyro.z.toString()} />
+          <TextInput editable={false} value={state.gyro.x.toString()} />
+          <TextInput editable={false} value={state.gyro.y.toString()} />
+          <TextInput editable={false} value={state.gyro.z.toString()} />
         </View>
         <View>
           <Text>Magnetômetro</Text>
-          <TextInput value={state.magnetometer.x.toString()} />
-          <TextInput value={state.magnetometer.y.toString()} />
-          <TextInput value={state.magnetometer.z.toString()} />
+          <TextInput editable={false} value={state.magnetometer.x.toString()} />
+          <TextInput editable={false} value={state.magnetometer.y.toString()} />
+          <TextInput editable={false} value={state.magnetometer.z.toString()} />
         </View>
         <View>
           <Text>Pressão</Text>
-          <TextInput value={state.pressure.toString()} />
+          <TextInput editable={false} value={state.pressure.toString()} />
+        </View>
+        <View>
+          <Text>Coordenadas</Text>
+          <View>
+            <Text>Lat</Text>
+            <TextInput editable={false} value={state.position.y.toString()} />
+          </View>
+          <View>
+            <Text>Lon</Text>
+            <TextInput editable={false} value={state.position.x.toString()} />
+          </View>
         </View>
       </>
-      )
     </SafeAreaView>
   );
 };
