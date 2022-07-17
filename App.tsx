@@ -5,34 +5,45 @@ export const App = () => {
   return <MainScreen />;
 };
 
+type PageState =
+  | {
+      state: 'enter-message';
+      message: string;
+    }
+  | {
+      state: 'show-message';
+      message: string;
+    };
+
 const MainScreen = () => {
-  const [state, setState] = useState<number[]>([0, 0]);
-  const [somaState, setSomaState] = useState('');
+  const [state, setState] = useState<PageState>({
+    state: 'enter-message',
+    message: '',
+  });
 
   return (
     <SafeAreaView>
-      <TextInput
-        placeholder="Enter a number"
-        value={state[0].toString()}
-        onChangeText={text => {
-          const digits = text.replace(/\D/g, '');
-
-          setState([+digits, state[1]]);
-        }}
-      />
-      <TextInput
-        placeholder="Enter a number"
-        value={state[1].toString()}
-        onChangeText={text => {
-          const digits = text.replace(/\D/g, '');
-          setState([state[0], +digits]);
-        }}
-      />
-      <Button
-        title="Somar"
-        onPress={() => setSomaState((state[0] + state[1]).toString())}
-      />
-      <Text>{somaState}</Text>
+      {state.state === 'enter-message' ? (
+        <>
+          <TextInput
+            placeholder="Enter a message"
+            value={state.message}
+            onChangeText={text => {
+              setState({...state, message: text});
+            }}
+          />
+          <Button
+            title="Send"
+            onPress={() => {
+              setState({state: 'show-message', message: state.message});
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <Text>{state.message}</Text>
+        </>
+      )}
     </SafeAreaView>
   );
 };
