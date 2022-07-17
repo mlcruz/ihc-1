@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, {useEffect, useState} from 'react';
 import {SafeAreaView, Text, TextInput, View} from 'react-native';
 
@@ -40,25 +39,25 @@ const MainScreen = () => {
     setUpdateIntervalForType(SensorTypes.magnetometer, 100); // defaults to 100ms
 
     const gyroSubscription = gyroscope.subscribe(speed => {
-      setState({
-        ...state,
+      setState(st => ({
+        ...st,
         gyro: {
           ...speed,
         },
-      });
+      }));
     });
 
     const magnetometerSubscription = magnetometer.subscribe(mag => {
-      setState({
-        ...state,
+      setState(st => ({
+        ...st,
         magnetometer: {
           ...mag,
         },
-      });
+      }));
     });
 
     const barometerSubscription = barometer.subscribe(({pressure}) =>
-      setState({...state, pressure}),
+      setState(st => ({...st, pressure})),
     );
 
     return () => {
