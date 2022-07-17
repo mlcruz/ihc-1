@@ -7,6 +7,7 @@ import {
   setUpdateIntervalForType,
   SensorTypes,
   magnetometer,
+  barometer,
 } from 'react-native-sensors';
 
 export const App = () => {
@@ -16,6 +17,7 @@ export const App = () => {
 type PageState = {
   gyro: {x: number; y: number; z: number};
   magnetometer: {x: number; y: number; z: number};
+  pressure: number;
 };
 
 const MainScreen = () => {
@@ -30,6 +32,7 @@ const MainScreen = () => {
       y: 0,
       z: 0,
     },
+    pressure: 0,
   });
 
   useEffect(() => {
@@ -54,9 +57,14 @@ const MainScreen = () => {
       });
     });
 
+    const barometerSubscription = barometer.subscribe(({pressure}) =>
+      setState({...state, pressure}),
+    );
+
     return () => {
       gyroSubscription.unsubscribe();
       magnetometerSubscription.unsubscribe();
+      barometerSubscription.unsubscribe();
     };
   }, []);
 
@@ -74,6 +82,10 @@ const MainScreen = () => {
           <TextInput value={state.magnetometer.x.toString()} />
           <TextInput value={state.magnetometer.y.toString()} />
           <TextInput value={state.magnetometer.z.toString()} />
+        </View>
+        <View>
+          <Text>Pressão</Text>
+          <TextInput value={state.pressure.toString()} />
         </View>
       </>
       )
